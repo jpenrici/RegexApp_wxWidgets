@@ -10,6 +10,7 @@ set(SOURCES
     app.h app.cpp
 )
 
+# WXWIN : Environment variable configured in Windows for the wxWidgets library.
 if (WIN32)
     set(wxWidgets_ROOT_DIR $ENV{WXWIN})
     set(wxWidgets_LIB_DIR  $ENV{WXWIN}/lib/vc_x64_lib)

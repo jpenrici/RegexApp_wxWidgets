@@ -6,16 +6,15 @@
 #include <wx/wx.h>
 #endif
 
-enum ID {ID_Menu_OnLoad, ID_wxTxtCtrl_Regex, ID_wxTxtCtrl_File, ID_Button_Search,
-         ID_Button_Reset, ID_StatuBar
-        };
+enum ID {ID_Menu_OnLoad, ID_wxTxtCtrl_Regex, ID_wxTxtCtrl_File, ID_wxLabel,
+         ID_Button_Search, ID_Button_Reset, ID_StatuBar};
+
+static const char *WXSTR_TITLE = "wxWidgets Simple Regex Search";
+static const char *WXSTR_ABOUT = "Application for text search by RegEx.";
 
 class App : public wxApp {
 public:
     virtual bool OnInit() wxOVERRIDE;
-
-private:
-    const wxString WXSTR_TITLE = "wxWidgets Regex";
 };
 
 class AppFrame : public wxFrame {
@@ -24,25 +23,30 @@ public:
     ~AppFrame() {};
 
 private:
-    wxString text;
-    wxString title;
-    wxButton *resetBtn;
-    wxButton *searchBtn;
-    wxMenu *fileMenu;
-    wxMenu *helpMenu;
-    wxMenuBar *menuBar;
-    wxStatusBar *statusBar;
-    wxTextCtrl *fileText;
-    wxTextCtrl *regexText;
-    wxBoxSizer *vBox;
-    wxBoxSizer *hBox1;
-    wxBoxSizer *hBox2;
+    std::string text;
+
+    wxString    title;
+    wxColor     normalBkgColor, highlightedFont;
+
+    wxMenuBar    *menuBar;
+    wxStatusBar  *statusBar;
+    wxMenu       *fileMenu, *helpMenu;
+    wxButton     *resetBtn, *searchBtn;
+    wxBoxSizer   *vBox, *hBox1, *hBox2;
+    wxTextCtrl   *fileText, *regexText;
+    wxStaticText *label;
 
     void OnAbout(wxCommandEvent &event);
     void OnLoad(wxCommandEvent &event);
     void OnReset(wxCommandEvent &event);
     void OnSearch(wxCommandEvent &event);
+    void Search(const wxString regExpression);
 
-    const wxString WXSTR_ABOUT = "This is a\n"
-                                 "test";
+    wxString Concat(std::vector<std::string> strings);
+
+    template<typename T>
+    wxString ToWxStr(T value);
+
+    template<typename T>
+    std::string ToStr(T value);
 };
