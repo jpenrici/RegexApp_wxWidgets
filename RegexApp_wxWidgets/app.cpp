@@ -102,18 +102,23 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
     SetStatusBar(statusBar);
     SetStatusText("Welcome!");
 
+    // Operating system information
+    auto osInfo = wxGetOsDescription().Upper();
+
     // Example
     currentText = "\t------------------------------\n"
                   "\tWelcome to Simple RegEx Search!\n"
                   "\t------------------------------\n\n"
                   "\tExample:\n\n"
-                  "\t1) Click SEARCH or press ENTER.\n\n"
-                  "\t2) Click RESET or press DEL to clear regular expression.\n\n"
+                  "\t1) Click SEARCH or press ENTER.\n"
+                  "\t2) Click RESET or press DEL to clear regular expression.\n"
                   "\t3) Enter the expression in the input box and search:\n\n"
                   "\t\t3.1) \\w+\n"
                   "\t\t3.2) \\d\\)\n"
-                  "\t\t3.3) [0-9]\n\n\n"
-                  "\t4) Load a .txt file by selecting Load from the Menu.\n";
+                  "\t\t3.3) [0-9]\n\n"
+                  "\t4) Load a .txt file by selecting Load from the Menu.\n\n"
+                  "\tOperating system:\n"
+                  "\t" + osInfo + "\n";
 
     // Update
     currentRegex = "";
