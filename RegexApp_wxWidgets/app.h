@@ -6,11 +6,36 @@
 #include <wx/wx.h>
 #endif
 
-enum ID {ID_Menu_OnLoad, ID_wxTxtCtrl_Regex, ID_wxTxtCtrl_File, ID_wxLabel,
-         ID_Button_Search, ID_Button_Reset, ID_StatuBar};
+#if wxUSE_HYPERLINKCTRL
+#include <wx/hyperlink.h>
+#endif
 
-static const char *WXSTR_TITLE = "wxWidgets Simple Regex Search";
-static const char *WXSTR_ABOUT = "Application for text search by RegEx.";
+#if wxUSE_FILE
+#include <wx/txtstrm.h>
+#include <wx/wfstream.h>
+#endif
+
+#include <filesystem>
+#include <iostream>
+#include <regex>
+#include <vector>
+
+enum ID {
+    ID_AboutDialog,
+    ID_Button_Reset,
+    ID_Button_Search,
+    ID_Menu_OnLoad,
+    ID_StatuBar,
+    ID_wxLabel,
+    ID_wxTxtCtrl_File,
+    ID_wxTxtCtrl_Regex
+};
+
+static const char *WXSTR_TITLE = "Regex Search wxWidgets App";
+static const char *WXSTR_ABOUT = "Application for text search by RegEx.\n\n"
+                                 "References:\n";
+static const char *WXSTR_HLINK1 = "https://www.wxwidgets.org";
+static const char *WXSTR_HLINK2 = "https://cplusplus.com/reference/regex";
 
 class App : public wxApp {
 public:
@@ -19,13 +44,14 @@ public:
 
 class AppFrame : public wxFrame {
 public:
-    AppFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
+    AppFrame(const wxString &title, const wxSize &size);
     ~AppFrame() {};
 
 private:
-    std::string text;
+    std::string currentText;
+    std::string currentRegex;
+    std::string currentFilename;
 
-    wxString    title;
     wxColor     normalBkgColor, highlightedFont;
 
     wxMenuBar    *menuBar;
@@ -40,7 +66,9 @@ private:
     void OnLoad(wxCommandEvent &event);
     void OnReset(wxCommandEvent &event);
     void OnSearch(wxCommandEvent &event);
+    void OnKeyDown(wxKeyEvent &event);
     void Search(const wxString regExpression);
+    void ResetAll();
 
     wxString Concat(std::vector<std::string> strings);
 
@@ -49,4 +77,18 @@ private:
 
     template<typename T>
     std::string ToStr(T value);
+};
+
+class AboutDialog : public wxDialog {
+public:
+    AboutDialog();
+    ~AboutDialog() {};
+
+private:
+    wxButton *okBtn;
+    wxStaticText *label;
+    wxHyperlinkCtrl *hyperlink1, *hyperlink2;
+    wxBoxSizer *vBox, *hBox[4];
+
+    void OnOK(wxCommandEvent &event);
 };

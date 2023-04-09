@@ -1,29 +1,21 @@
 #include "app.h"
 
-#if wxUSE_FILE
-#include <wx/txtstrm.h>
-#include <wx/wfstream.h>
-#endif
-
-#include <filesystem>
-#include <iterator>
-#include <regex>
-#include <vector>
-
 bool App::OnInit()
 {
     if (!wxApp::OnInit()) {
         return false;
     }
 
-    AppFrame *frame = new AppFrame(WXSTR_TITLE, wxPoint(1, 1), wxSize(800, 600));
+    AppFrame *frame = new AppFrame(WXSTR_TITLE, wxSize(800, 600));
     frame->Show();
+
+    SetTopWindow(frame);
 
     return true;
 }
 
-AppFrame::AppFrame(const wxString &title, const wxPoint &pos, const wxSize &size)
-    : wxFrame(nullptr, wxID_ANY, title, pos, size), title(title)
+AppFrame::AppFrame(const wxString &title, const wxSize &size)
+    : wxFrame(nullptr, wxID_ANY, title, wxPoint(1, 1), size)
 {
     // Menu File
     fileMenu = new wxMenu;
@@ -41,7 +33,7 @@ AppFrame::AppFrame(const wxString &title, const wxPoint &pos, const wxSize &size
 
     Bind(wxEVT_MENU, &AppFrame::OnLoad, this, ID_Menu_OnLoad);
     Bind(wxEVT_MENU, &AppFrame::OnAbout, this, wxID_ABOUT);
-    Bind(wxEVT_MENU, [ = ](wxCommandEvent &) {Close(true);}, wxID_EXIT);
+    Bind(wxEVT_MENU, [ = ](wxCommandEvent &) { Close(true); }, wxID_EXIT);
 
     // Color
     normalBkgColor = GetBackgroundColour();
@@ -54,7 +46,7 @@ AppFrame::AppFrame(const wxString &title, const wxPoint &pos, const wxSize &size
     label = new wxStaticText(this, ID_wxLabel, "Regular Expression:");
     label->SetFont(font);
 
-    fileText = new wxTextCtrl(this, ID_wxTxtCtrl_Regex, wxEmptyString,
+    fileText = new wxTextCtrl(this, ID_wxTxtCtrl_File, wxEmptyString,
                               wxDefaultPosition, wxDefaultSize,
                               wxTE_MULTILINE | wxTE_RICH | wxTE_READONLY,
                               wxDefaultValidator, wxTextCtrlNameStr);
@@ -62,10 +54,15 @@ AppFrame::AppFrame(const wxString &title, const wxPoint &pos, const wxSize &size
     fileText->SetEditable(false);
     fileText->SetFont(font);
 
-    regexText = new wxTextCtrl(this, ID_wxTxtCtrl_File);
+    regexText  = new wxTextCtrl(this, ID_wxTxtCtrl_Regex, wxEmptyString,
+                                wxDefaultPosition, wxDefaultSize,
+                                wxTE_PROCESS_ENTER);
     regexText->SetFocus();
     regexText->SetFont(font);
     regexText->SetMinSize(wxSize(380, wxDefaultCoord));
+
+    Bind(wxEVT_TEXT_ENTER, &AppFrame::OnSearch, this, ID_wxTxtCtrl_Regex);
+    Bind(wxEVT_CHAR_HOOK, &AppFrame::OnKeyDown, this, ID_wxTxtCtrl_Regex);
 
     // Button
     searchBtn = new wxButton(this, ID_Button_Search, "SEARCH");
@@ -106,20 +103,23 @@ AppFrame::AppFrame(const wxString &title, const wxPoint &pos, const wxSize &size
     SetStatusText("Welcome!");
 
     // Example
-    text = "\t------------------------------\n"
-           "\tWelcome to Simple RegEx Search!\n"
-           "\t------------------------------\n\n"
-           "\tExample:\n\n"
-           "\t1) Click SEARCH.\n\n"
-           "\t2) Click RESET.\n\n"
-           "\t3) Enter the expression in the input box and search:\n\n"
-           "\t\t3.1) \\w+\n"
-           "\t\t3.2) \\d\\)\n"
-           "\t\t3.3) [0-9]\n\n\n"
-           "\t4) Load a .txt file by selecting Load from the Menu.\n";
+    currentText = "\t------------------------------\n"
+                  "\tWelcome to Simple RegEx Search!\n"
+                  "\t------------------------------\n\n"
+                  "\tExample:\n\n"
+                  "\t1) Click SEARCH or press ENTER.\n\n"
+                  "\t2) Click RESET or press DEL to clear regular expression.\n\n"
+                  "\t3) Enter the expression in the input box and search:\n\n"
+                  "\t\t3.1) \\w+\n"
+                  "\t\t3.2) \\d\\)\n"
+                  "\t\t3.3) [0-9]\n\n\n"
+                  "\t4) Load a .txt file by selecting Load from the Menu.\n";
 
     // Update
-    fileText->SetValue(text);
+    currentRegex = "";
+    currentFilename = "";
+
+    fileText->SetValue(currentText);
     regexText->SetValue("search");
 }
 
@@ -138,21 +138,29 @@ void AppFrame::OnLoad(wxCommandEvent &event)
 
     auto path = openFileDialog->GetPath();
     auto filename = std::filesystem::path(std::string(path)).filename();
+    if (currentFilename == filename) {
+        wxMessageBox(currentFilename + " is open!", WXSTR_TITLE,
+                     wxOK | wxCENTRE | wxDIALOG_NO_PARENT | wxICON_EXCLAMATION);
+        return;
+    }
+
+    currentFilename = filename;
+    currentText = "";
     int count = 0;
-    text = "";
 
     try {
         wxFileInputStream input(path);
         wxTextInputStream txtInput(input);
         while (input.IsOk() && !input.Eof()) {
-            text += Concat({std::string(txtInput.ReadLine()), "\n"});
+            currentText += Concat({std::string(txtInput.ReadLine()), "\n"});
             count += !input.Eof() ? 1 : 0;
         }
         if (count > 0) {
             wxMessageBox("Loaded " + ToWxStr(count) + " lines.");
             SetStatusText(Concat({"Open: ", std::string(filename)}));
             fileText->SetBackgroundColour(normalBkgColor);
-            fileText->SetValue(text);
+            fileText->SetValue(currentText);
+            currentRegex = "";
         }
     }
     catch (...) {
@@ -162,7 +170,8 @@ void AppFrame::OnLoad(wxCommandEvent &event)
 
 void AppFrame::OnAbout(wxCommandEvent &event)
 {
-    wxMessageBox(WXSTR_ABOUT, "About " + title, wxOK | wxICON_INFORMATION);
+    AboutDialog *aboutDialog = new AboutDialog();
+    aboutDialog->Show(true);
 }
 
 void AppFrame::OnSearch(wxCommandEvent &event)
@@ -172,11 +181,26 @@ void AppFrame::OnSearch(wxCommandEvent &event)
 
 void AppFrame::OnReset(wxCommandEvent &event)
 {
+    ResetAll();
+}
+
+void AppFrame::OnKeyDown(wxKeyEvent &event)
+{
+    auto keyCode = event.GetKeyCode();
+    if (keyCode == 127) { // Delete
+        ResetAll();
+    }
+    event.Skip();
+}
+
+void AppFrame::ResetAll()
+{
     regexText->Clear();
+    currentRegex = "";
 
     fileText->Clear();
     fileText->SetBackgroundColour(normalBkgColor);
-    fileText->SetValue(text);
+    fileText->SetValue(currentText);
 
     SetStatusText(wxString(wxEmptyString));
 }
@@ -187,18 +211,28 @@ void AppFrame::Search(const wxString regExpression)
         SetStatusText("Regex is empty!");
         return;
     }
+
+    if (currentRegex != regExpression) {
+        currentRegex = regExpression;
+    }
+    else {
+        SetStatusText("This RegEx has already been searched.");
+        return;
+    }
+
     SetStatusText("Wait ...");
 
     unsigned count = 0;
     const std::string pattern(regExpression);
-    std::vector<bool> matches(text.size(), false);
+    std::vector<bool> matches(currentText.size(), false);
 
     try {
         auto flags = std::regex_constants::ECMAScript | std::regex_constants::icase;
         std::regex regEx(pattern, flags);
 
-        if (std::regex_search(text, regEx)) {
-            auto words_begin = std::sregex_iterator(text.begin(), text.end(), regEx);
+        if (std::regex_search(currentText, regEx)) {
+            auto words_begin = std::sregex_iterator(currentText.begin(),
+                                                    currentText.end(), regEx);
             auto words_end = std::sregex_iterator();
             count = std::distance(words_begin, words_end);
             for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
@@ -212,7 +246,8 @@ void AppFrame::Search(const wxString regExpression)
         }
     }
     catch (...) {
-        wxMessageBox("Invalid regex!");
+        wxMessageBox("Invalid regex!", WXSTR_TITLE,
+                     wxOK | wxCENTRE | wxDIALOG_NO_PARENT | wxICON_EXCLAMATION);
     }
 
     // Refresh
@@ -224,7 +259,7 @@ void AppFrame::Search(const wxString regExpression)
         else {
             fileText->SetBackgroundColour(normalBkgColor);
         }
-        fileText->AppendText(text[i]);
+        fileText->AppendText(currentText[i]);
     }
 
     SetStatusText(Concat({"Found ", ToStr(count), " matches."}));
@@ -257,4 +292,67 @@ std::string AppFrame::ToStr(T value)
     ss >> str;
 
     return str;
+}
+
+AboutDialog::AboutDialog()
+    : wxDialog(NULL, -1, WXSTR_TITLE, wxDefaultPosition, wxSize(450, 300))
+{
+    // Box
+    vBox = new wxBoxSizer(wxVERTICAL);
+    hBox[0] = new wxBoxSizer(wxHORIZONTAL);
+    hBox[1] = new wxBoxSizer(wxHORIZONTAL);
+    hBox[2] = new wxBoxSizer(wxHORIZONTAL);
+    hBox[3] = new wxBoxSizer(wxHORIZONTAL);
+
+    // Label
+    label = new wxStaticText(this, wxID_ANY, WXSTR_ABOUT, wxDefaultPosition,
+                             wxDefaultSize, wxTE_MULTILINE | wxTE_RICH);
+    label->SetFont(wxFont(14, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
+                          wxFONTWEIGHT_NORMAL));
+
+    // Hyperlink
+    hyperlink1 = new wxHyperlinkCtrl(this, wxID_ANY,
+                                     WXSTR_HLINK1, WXSTR_HLINK1,
+                                     wxDefaultPosition, wxDefaultSize,
+                                     wxHL_DEFAULT_STYLE);
+    hyperlink1->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
+                               wxFONTWEIGHT_NORMAL));
+
+    hyperlink2 = new wxHyperlinkCtrl(this, wxID_ANY,
+                                     WXSTR_HLINK2, WXSTR_HLINK2,
+                                     wxDefaultPosition, wxDefaultSize,
+                                     wxHL_DEFAULT_STYLE);
+    hyperlink2->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
+                               wxFONTWEIGHT_NORMAL));
+
+    // Button
+    okBtn = new wxButton(this, wxID_ANY, "Ok", wxDefaultPosition, wxSize(70, 30));
+    okBtn->Bind(wxEVT_BUTTON, &AboutDialog::OnOK, this);
+
+    // Dialog
+    hBox[0]->Add(label, 1);
+    hBox[1]->Add(hyperlink1, 1);
+    hBox[2]->Add(hyperlink2, 1);
+    hBox[3]->Add(okBtn, 1);
+
+    vBox->AddSpacer(10);
+    vBox->Add(hBox[0], 1, wxALIGN_CENTRE_HORIZONTAL);
+    vBox->AddSpacer(10);
+    vBox->Add(hBox[1], 1, wxALIGN_CENTRE_HORIZONTAL);
+    vBox->Add(hBox[2], 1, wxALIGN_CENTRE_HORIZONTAL);
+    vBox->AddSpacer(10);
+    vBox->Add(hBox[3], 1, wxALIGN_CENTRE_HORIZONTAL);
+
+    SetSizer(vBox);
+
+    Centre();
+    ShowModal();
+
+    // Exit
+    Destroy();
+}
+
+void AboutDialog::OnOK(wxCommandEvent &event)
+{
+    Destroy();
 }

@@ -1,3 +1,13 @@
+/*
+ * Simple regular expression search app.
+ *
+ * References:
+ *
+ *      https://www.wxwidgets.org/
+ *      https://cplusplus.com/reference/regex/
+ *
+ */
+
 #include "app.h"
 
 #include <iostream>
