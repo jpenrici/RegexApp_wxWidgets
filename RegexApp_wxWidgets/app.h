@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <iostream>
 #include <regex>
+#include <string>
 #include <vector>
 
 enum ID {
@@ -71,12 +72,6 @@ private:
     void ResetAll();
 
     wxString Concat(std::vector<std::string> strings);
-
-    template<typename T>
-    wxString ToWxStr(T value);
-
-    template<typename T>
-    std::string ToStr(T value);
 };
 
 class AboutDialog : public wxDialog {

@@ -144,7 +144,7 @@ void AppFrame::OnLoad(wxCommandEvent &event)
         return;
     }
 
-    currentFilename = filename;
+    currentFilename = filename.string();
     currentText = "";
     int count = 0;
 
@@ -156,15 +156,15 @@ void AppFrame::OnLoad(wxCommandEvent &event)
             count += !input.Eof() ? 1 : 0;
         }
         if (count > 0) {
-            wxMessageBox("Loaded " + ToWxStr(count) + " lines.");
-            SetStatusText(Concat({"Open: ", std::string(filename)}));
+            wxMessageBox("Loaded " + std::to_string(count) + " lines.");
+            SetStatusText(Concat({"Open: ", filename.string()}));
             fileText->SetBackgroundColour(normalBkgColor);
             fileText->SetValue(currentText);
             currentRegex = "";
         }
     }
     catch (...) {
-        SetStatusText(Concat({"Failed to open ", filename}));
+        SetStatusText(Concat({"Failed to open ", filename.string()}));
     }
 }
 
@@ -262,7 +262,7 @@ void AppFrame::Search(const wxString regExpression)
         fileText->AppendText(currentText[i]);
     }
 
-    SetStatusText(Concat({"Found ", ToStr(count), " matches."}));
+    SetStatusText(Concat({"Found ", std::to_string(count), " matches."}));
 }
 
 wxString AppFrame::Concat(std::vector<std::string> strings)
@@ -272,26 +272,6 @@ wxString AppFrame::Concat(std::vector<std::string> strings)
     }
 
     return strings.empty() ? wxString(wxEmptyString) : wxString(strings.front());
-}
-
-template <typename T>
-wxString AppFrame::ToWxStr(T value)
-{
-    wxString wstr;
-    wstr << value;
-
-    return wstr;
-};
-
-template <typename T>
-std::string AppFrame::ToStr(T value)
-{
-    std::stringstream ss;
-    std::string str;
-    ss << value;
-    ss >> str;
-
-    return str;
 }
 
 AboutDialog::AboutDialog()

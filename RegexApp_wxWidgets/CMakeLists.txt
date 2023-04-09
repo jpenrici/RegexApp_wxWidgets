@@ -26,11 +26,11 @@ if (wxWidgets_FOUND)
     if (WIN32)
         message("Root Dir: " ${wxWidgets_ROOT_DIR} )
         message("Lib dir : " ${wxWidgets_LIB_DIR} )
-        add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
     else(LINUX)
         message("wxWidgets package found!")
-        add_executable(${PROJECT_NAME} ${SOURCES})
     endif()
+
+    add_executable(${PROJECT_NAME} ${SOURCES})
 
     target_link_libraries (${PROJECT_NAME} PUBLIC ${wxWidgets_LIBRARIES})
 
