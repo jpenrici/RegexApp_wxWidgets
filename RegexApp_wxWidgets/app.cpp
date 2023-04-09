@@ -50,7 +50,6 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
                               wxDefaultPosition, wxDefaultSize,
                               wxTE_MULTILINE | wxTE_RICH | wxTE_READONLY,
                               wxDefaultValidator, wxTextCtrlNameStr);
-    fileText->SetBackgroundColour(normalBkgColor);
     fileText->SetEditable(false);
     fileText->SetFont(font);
 
@@ -163,7 +162,6 @@ void AppFrame::OnLoad(wxCommandEvent &event)
         if (count > 0) {
             wxMessageBox("Loaded " + std::to_string(count) + " lines.");
             SetStatusText(Concat({"Open: ", filename.string()}));
-            fileText->SetBackgroundColour(normalBkgColor);
             fileText->SetValue(currentText);
             currentRegex = "";
         }
@@ -204,7 +202,6 @@ void AppFrame::ResetAll()
     currentRegex = "";
 
     fileText->Clear();
-    fileText->SetBackgroundColour(normalBkgColor);
     fileText->SetValue(currentText);
 
     SetStatusText(wxString(wxEmptyString));
@@ -229,7 +226,6 @@ void AppFrame::Search(const wxString regExpression)
 
     unsigned count = 0;
     const std::string pattern(regExpression);
-    std::vector<bool> matches(currentText.size(), false);
 
     try {
         auto flags = std::regex_constants::ECMAScript | std::regex_constants::icase;
@@ -242,29 +238,13 @@ void AppFrame::Search(const wxString regExpression)
             count = std::distance(words_begin, words_end);
             for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
                 std::smatch m = *i;
-                auto pos = m.position();
-                auto size = pos + m.length();
-                for (unsigned j = pos; j < size; j++) {
-                    matches[j] = true;
-                }
+                fileText->SetStyle(m.position(), m.position() + m.length(), *wxRED);
             }
         }
     }
     catch (...) {
         wxMessageBox("Invalid regex!", WXSTR_TITLE,
                      wxOK | wxCENTRE | wxDIALOG_NO_PARENT | wxICON_EXCLAMATION);
-    }
-
-    // Refresh
-    fileText->Clear();
-    for (size_t i = 0; i < matches.size(); i++) {
-        if (matches[i]) {
-            fileText->SetBackgroundColour(highlightedFont);
-        }
-        else {
-            fileText->SetBackgroundColour(normalBkgColor);
-        }
-        fileText->AppendText(currentText[i]);
     }
 
     SetStatusText(Concat({"Found ", std::to_string(count), " matches."}));
@@ -313,6 +293,7 @@ AboutDialog::AboutDialog()
     // Button
     okBtn = new wxButton(this, wxID_ANY, "Ok", wxDefaultPosition, wxSize(70, 30));
     okBtn->Bind(wxEVT_BUTTON, &AboutDialog::OnOK, this);
+    okBtn->SetFocus();
 
     // Dialog
     hBox[0]->Add(label, 1);
