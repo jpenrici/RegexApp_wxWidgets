@@ -36,8 +36,8 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
     Bind(wxEVT_MENU, [ = ](wxCommandEvent &) { Close(true); }, wxID_EXIT);
 
     // Color
-    normalBkgColor = GetBackgroundColour();
-    highlightedFont = wxColor(255, 0, 0, 0);
+    regexBkgColor  = wxColor(255, 255, 127, 0);
+    regexTextColor = wxColor(255, 0, 0, 0);
 
     // Font
     wxFont font(14, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
@@ -130,8 +130,9 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
 void AppFrame::OnLoad(wxCommandEvent &event)
 {
     wxFileDialog *openFileDialog;
+    auto homeDir = wxGetHomeDir();
     openFileDialog = new wxFileDialog(this,
-                                      "Open File Text", ".", "",
+                                      "Open File Text", homeDir, "",
                                       "Open (*.txt)|*.txt",
                                       wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
@@ -238,7 +239,8 @@ void AppFrame::Search(const wxString regExpression)
             count = std::distance(words_begin, words_end);
             for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
                 std::smatch m = *i;
-                fileText->SetStyle(m.position(), m.position() + m.length(), *wxRED);
+                fileText->SetStyle(m.position(), m.position() + m.length(),
+                                   wxTextAttr(regexTextColor, regexBkgColor));
             }
         }
     }

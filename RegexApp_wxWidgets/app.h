@@ -53,7 +53,8 @@ private:
     std::string currentRegex;
     std::string currentFilename;
 
-    wxColor     normalBkgColor, highlightedFont;
+    wxColor     regexBkgColor;
+    wxColor     regexTextColor;
 
     wxMenuBar    *menuBar;
     wxStatusBar  *statusBar;
