@@ -104,6 +104,15 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
     // Operating system information
     auto osInfo = wxGetOsDescription().Upper();
 
+#ifdef __LINUX__
+    osInfo = wxGetLinuxDistributionInfo().Description.Upper();
+#endif
+
+#ifdef WIN32
+    SetBackgroundColour(wxColour(*wxWHITE));
+    statusBar->SetBackgroundColour(wxColour(*wxWHITE));
+#endif
+
     // Example
     currentText = "\t------------------------------\n"
                   "\tWelcome to Simple RegEx Search!\n"
@@ -223,6 +232,8 @@ void AppFrame::Search(const wxString regExpression)
         return;
     }
 
+    fileText->Clear();
+    fileText->SetValue(currentText);
     SetStatusText("Wait ...");
 
     unsigned count = 0;
@@ -312,6 +323,10 @@ AboutDialog::AboutDialog()
     vBox->Add(hBox[3], 1, wxALIGN_CENTRE_HORIZONTAL);
 
     SetSizer(vBox);
+
+#ifdef WIN32
+    SetBackgroundColour(wxColour(*wxWHITE));
+#endif
 
     Centre();
     ShowModal();

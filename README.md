@@ -1,6 +1,6 @@
 # RegexApp_wxWidgets
 
-Simple GUI experience with wxWidgts.<br>
+Simple GUI experience with wxWidgets.<br>
 
 ## Requeriments
 
