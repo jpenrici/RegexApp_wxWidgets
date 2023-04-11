@@ -6,7 +6,7 @@ bool App::OnInit()
         return false;
     }
 
-    AppFrame *frame = new AppFrame(WXSTR_TITLE, wxSize(800, 600));
+    AppFrame *frame = new AppFrame("Regex Search wxWidgets App", wxSize(800, 600));
     frame->Show();
 
     SetTopWindow(frame);
@@ -24,7 +24,7 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
     fileMenu->Append(wxID_EXIT);
 
     helpMenu = new wxMenu;
-    helpMenu->Append(wxID_ABOUT);
+    helpMenu->Append(wxID_ABOUT, "&About\tF1", "Show about dialog");
 
     menuBar = new wxMenuBar;
     menuBar->Append(fileMenu, "&File");
@@ -59,9 +59,6 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
     regexText->SetFocus();
     regexText->SetFont(font);
     regexText->SetMinSize(wxSize(380, wxDefaultCoord));
-
-    Bind(wxEVT_TEXT_ENTER, &AppFrame::OnSearch, this, ID_wxTxtCtrl_Regex);
-    Bind(wxEVT_CHAR_HOOK, &AppFrame::OnKeyDown, this, ID_wxTxtCtrl_Regex);
 
     // Button
     searchBtn = new wxButton(this, ID_Button_Search, "SEARCH");
@@ -101,6 +98,8 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
     SetStatusBar(statusBar);
     SetStatusText("Welcome!");
 
+    Bind(wxEVT_CHAR_HOOK, &AppFrame::OnKeyDown, this);
+
     // Operating system information
     auto osInfo = wxGetOsDescription().Upper();
 
@@ -139,9 +138,8 @@ AppFrame::AppFrame(const wxString &title, const wxSize &size)
 void AppFrame::OnLoad(wxCommandEvent &event)
 {
     wxFileDialog *openFileDialog;
-    auto homeDir = wxGetHomeDir();
     openFileDialog = new wxFileDialog(this,
-                                      "Open File Text", homeDir, "",
+                                      "Open File Text", wxGetHomeDir(), "",
                                       "Open (*.txt)|*.txt",
                                       wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
@@ -153,7 +151,7 @@ void AppFrame::OnLoad(wxCommandEvent &event)
     auto path = openFileDialog->GetPath();
     auto filename = std::filesystem::path(std::string(path)).filename();
     if (currentFilename == filename) {
-        wxMessageBox(currentFilename + " is open!", WXSTR_TITLE,
+        wxMessageBox(currentFilename + " is open!", GetTitle(),
                      wxOK | wxCENTRE | wxDIALOG_NO_PARENT | wxICON_EXCLAMATION);
         return;
     }
@@ -200,9 +198,15 @@ void AppFrame::OnReset(wxCommandEvent &event)
 void AppFrame::OnKeyDown(wxKeyEvent &event)
 {
     auto keyCode = event.GetKeyCode();
+    //SetStatusText(std::to_string(keyCode));
+
     if (keyCode == 127) { // Delete
         ResetAll();
     }
+    if (keyCode == 13) { // Enter
+        Search(regexText->GetValue());
+    }
+
     event.Skip();
 }
 
@@ -256,7 +260,7 @@ void AppFrame::Search(const wxString regExpression)
         }
     }
     catch (...) {
-        wxMessageBox("Invalid regex!", WXSTR_TITLE,
+        wxMessageBox("Invalid regex!", GetTitle(),
                      wxOK | wxCENTRE | wxDIALOG_NO_PARENT | wxICON_EXCLAMATION);
     }
 
@@ -272,8 +276,8 @@ wxString AppFrame::Concat(std::vector<std::string> strings)
     return strings.empty() ? wxString(wxEmptyString) : wxString(strings.front());
 }
 
-AboutDialog::AboutDialog()
-    : wxDialog(NULL, -1, WXSTR_TITLE, wxDefaultPosition, wxSize(450, 300))
+AppFrame::AboutDialog::AboutDialog()
+    : wxDialog(NULL, wxID_ANY, "About", wxDefaultPosition, wxSize(450, 300))
 {
     // Box
     vBox = new wxBoxSizer(wxVERTICAL);
@@ -283,21 +287,21 @@ AboutDialog::AboutDialog()
     hBox[3] = new wxBoxSizer(wxHORIZONTAL);
 
     // Label
-    label = new wxStaticText(this, wxID_ANY, WXSTR_ABOUT, wxDefaultPosition,
+    label = new wxStaticText(this, wxID_ANY, ABOUT, wxDefaultPosition,
                              wxDefaultSize, wxTE_MULTILINE | wxTE_RICH);
     label->SetFont(wxFont(14, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
                           wxFONTWEIGHT_NORMAL));
 
     // Hyperlink
     hyperlink1 = new wxHyperlinkCtrl(this, wxID_ANY,
-                                     WXSTR_HLINK1, WXSTR_HLINK1,
+                                     ABOUT_HLINK1, ABOUT_HLINK1,
                                      wxDefaultPosition, wxDefaultSize,
                                      wxHL_DEFAULT_STYLE);
     hyperlink1->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
                                wxFONTWEIGHT_NORMAL));
 
     hyperlink2 = new wxHyperlinkCtrl(this, wxID_ANY,
-                                     WXSTR_HLINK2, WXSTR_HLINK2,
+                                     ABOUT_HLINK2, ABOUT_HLINK2,
                                      wxDefaultPosition, wxDefaultSize,
                                      wxHL_DEFAULT_STYLE);
     hyperlink2->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
@@ -335,7 +339,7 @@ AboutDialog::AboutDialog()
     Destroy();
 }
 
-void AboutDialog::OnOK(wxCommandEvent &event)
+void AppFrame::AboutDialog::OnOK(wxCommandEvent &event)
 {
-    Destroy();
+    Close();
 }

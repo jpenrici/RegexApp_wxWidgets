@@ -21,26 +21,10 @@
 #include <string>
 #include <vector>
 
-enum ID {
-    ID_AboutDialog,
-    ID_Button_Reset,
-    ID_Button_Search,
-    ID_Menu_OnLoad,
-    ID_StatuBar,
-    ID_wxLabel,
-    ID_wxTxtCtrl_File,
-    ID_wxTxtCtrl_Regex
-};
-
-static const char *WXSTR_TITLE = "Regex Search wxWidgets App";
-static const char *WXSTR_ABOUT = "Application for text search by RegEx.\n\n"
-                                 "References:\n";
-static const char *WXSTR_HLINK1 = "https://www.wxwidgets.org";
-static const char *WXSTR_HLINK2 = "https://cplusplus.com/reference/regex";
-
 class App : public wxApp {
 public:
     virtual bool OnInit() wxOVERRIDE;
+
 };
 
 class AppFrame : public wxFrame {
@@ -49,6 +33,18 @@ public:
     ~AppFrame() {};
 
 private:
+
+    enum ID {
+        ID_AboutDialog,
+        ID_Button_Reset,
+        ID_Button_Search,
+        ID_Menu_OnLoad,
+        ID_StatuBar,
+        ID_wxLabel,
+        ID_wxTxtCtrl_File,
+        ID_wxTxtCtrl_Regex
+    };
+
     std::string currentText;
     std::string currentRegex;
     std::string currentFilename;
@@ -73,18 +69,23 @@ private:
     void ResetAll();
 
     wxString Concat(std::vector<std::string> strings);
-};
 
-class AboutDialog : public wxDialog {
-public:
-    AboutDialog();
-    ~AboutDialog() {};
+    class AboutDialog : public wxDialog {
+    public:
+        AboutDialog();
+        ~AboutDialog() {};
 
-private:
-    wxButton *okBtn;
-    wxStaticText *label;
-    wxHyperlinkCtrl *hyperlink1, *hyperlink2;
-    wxBoxSizer *vBox, *hBox[4];
+    private:
+        const wxString ABOUT = "Application for text search by RegEx.\n\n"
+                               "References:\n";
+        const wxString ABOUT_HLINK1 = "https://www.wxwidgets.org";
+        const wxString ABOUT_HLINK2 = "https://cplusplus.com/reference/regex";
 
-    void OnOK(wxCommandEvent &event);
+        wxButton *okBtn;
+        wxStaticText *label;
+        wxHyperlinkCtrl *hyperlink1, *hyperlink2;
+        wxBoxSizer *vBox, *hBox[4];
+
+        void OnOK(wxCommandEvent &event);
+    };
 };

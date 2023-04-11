@@ -21,8 +21,11 @@ int main(int argc, char *argv[])
 
     if (pApp != nullptr) {
         wxEntryStart(argc, argv);
-        wxTheApp->CallOnInit();
-        wxTheApp->OnRun();
+        if (wxTheApp->OnInit()) {
+            wxMessageOutputDebug().Printf("%s is open!", pApp->GetAppName().Upper());
+            wxTheApp->OnRun();
+        };
+        wxMessageOutputDebug().Printf("%s is closed!", pApp->GetAppName().Upper());
         wxEntryCleanup();
     }
     else {
